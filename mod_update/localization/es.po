@@ -1,0 +1,86 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: JewelCraft 2.11\n"
+"POT-Creation-Date: 2021-06-04\n"
+"PO-Revision-Date: 18-03-2019\n"
+"Last-Translator: Óscar Hernández\n"
+"Language-Team: Mikhail Rachinskiy\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
+
+msgid "Automatically check for updates"
+msgstr "Buscar actualizaciones automáticamente"
+
+msgid "Update to pre-release"
+msgstr "Actualizar a prelanzamiento"
+
+msgid "Auto-check interval"
+msgstr "Intervalo buscar automáticamente"
+
+msgid "Once a day"
+msgstr "Una vez al día"
+
+msgid "Once a week"
+msgstr "Una vez por semana"
+
+msgid "Once a month"
+msgstr "Una vez al mes"
+
+msgid "Update completed"
+msgstr "Actualización completada"
+
+msgid "Close Blender to complete the installation"
+msgstr "Cerrar Blender para completar la instalación"
+
+msgid "Installing..."
+msgstr "Instalando..."
+
+msgid "Checking..."
+msgstr "Revisando..."
+
+msgid "Update {} is available"
+msgstr "Actualización {} disponible"
+
+msgid "Last checked"
+msgstr "Última revisón"
+
+msgid "never"
+msgstr "nunca"
+
+msgid "today"
+msgstr "hoy"
+
+msgid "yesterday"
+msgstr "ayer"
+
+msgid "days ago"
+msgstr "hace días"
+
+msgid "Check for new add-on release"
+msgstr "Buscar si hay un nuevo lanzamiento del agregado"
+
+msgid "Download and install new version of the add-on"
+msgstr "Descargar e instalar la nueva versión del agregado"
+
+msgid "Open release notes in web browser"
+msgstr "Abrir las notas de la versión en el navegador web"
+
+msgid "Automatically check for updates with specified interval"
+msgstr "Buscar actualizaciones automáticamente con un intervalo específico"
+
+msgid "Update add-on to pre-release version if available"
+msgstr "Actualizar agregado a versión de prelanzamiento (si está disponible)"
+
+msgctxt "Operator"
+msgid "Check for Updates"
+msgstr "Buscar actualizaciones"
+
+msgctxt "Operator"
+msgid "Install Update"
+msgstr "Instalar actualización"
+
+msgctxt "Operator"
+msgid "See What's New"
+msgstr "Ver novedades"
