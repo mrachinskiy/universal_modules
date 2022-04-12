@@ -37,7 +37,7 @@ def _parse_tag(tag: str) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
     return vers
 
 
-def _save_state_serialize() -> None:
+def _save_state_serialize(runtime_state: int = None) -> None:
     import datetime
     import json
 
@@ -52,6 +52,8 @@ def _save_state_serialize() -> None:
 
     with open(SAVE_STATE_FILEPATH, "w", encoding="utf-8") as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
+
+    _runtime_state_set(runtime_state)
 
 
 def _save_state_deserialize() -> dict[str, Union[bool, int]]:
@@ -106,21 +108,19 @@ def _update_check(use_force_check: bool) -> None:
 
             for release in data:
 
-                if not prefs.mod_update_prerelease and release["prerelease"]:
+                if (not prefs.mod_update_prerelease and release["prerelease"]) or release["draft"]:
                     continue
 
-                if not release["draft"]:
-                    update_version, required_blender = _parse_tag(release["tag_name"])
+                update_ver, blender_ver = _parse_tag(release["tag_name"])
 
-                    if update_version > ADDON_VERSION:
-                        if required_blender <= bpy.app.version:
-                            break
-                        else:
-                            continue
+                if update_ver > ADDON_VERSION:
+                    if blender_ver <= bpy.app.version:
+                        break
                     else:
-                        _save_state_serialize()
-                        _runtime_state_set(None)
-                        return
+                        continue
+                else:
+                    _save_state_serialize()
+                    return
 
             with urllib.request.urlopen(release["assets_url"], context=ssl_context) as response:
                 data = json.load(response)
@@ -128,23 +128,23 @@ def _update_check(use_force_check: bool) -> None:
                 for asset in data:
                     if re.match(r".+\d+.\d+.\d+.+", asset["name"]):
                         break
-
-                prerelease_note = " (pre-release)" if release["prerelease"] else ""
+                else:
+                    state.error_msg = "Unable to find installation file"
+                    _save_state_serialize(state.ERROR)
 
                 state.update_available = True
-                state.update_version = ".".join(str(x) for x in update_version) + prerelease_note
+                state.update_version = ".".join(str(x) for x in update_ver)
                 state.download_url = asset["browser_download_url"]
                 state.changelog_url = release["html_url"]
+                if release["prerelease"]:
+                    state.update_version += " (pre-release)"
 
         _save_state_serialize()
-        _runtime_state_set(None)
 
     except (urllib.error.HTTPError, urllib.error.URLError) as e:
 
         state.error_msg = str(e)
-
         _save_state_serialize()
-        _runtime_state_set(state.ERROR)
 
 
 def _update_download() -> None:
