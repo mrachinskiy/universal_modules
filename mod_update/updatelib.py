@@ -27,9 +27,8 @@ def _parse_tag(tag: str) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
     import re
 
     vers = tuple(
-        tuple(int(x) for x in ver_str)
-        for ver_str in
-        [re.sub(r"[^0-9]", " ", ver_raw).split() for ver_raw in tag.split("-")]
+        tuple(int(x) for x in re.findall(r"\d+", y))
+        for y in tag.split("-")
     )
 
     if len(vers) == 1:
