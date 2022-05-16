@@ -2,7 +2,6 @@
 # Copyright 2019-2022 Mikhail Rachinskiy
 
 import threading
-from typing import Union
 
 import bpy
 
@@ -21,20 +20,6 @@ def _runtime_state_set(status: int) -> None:
     for window in bpy.context.window_manager.windows:
         for area in window.screen.areas:
             area.tag_redraw()
-
-
-def _parse_tag(tag: str) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
-    import re
-
-    vers = tuple(
-        tuple(int(x) for x in re.findall(r"\d+", y))
-        for y in tag.split("-")
-    )
-
-    if len(vers) == 1:
-        return vers[0], (0, 0, 0)
-
-    return vers
 
 
 def _save_state_serialize(runtime_state: int = None) -> None:
@@ -56,7 +41,7 @@ def _save_state_serialize(runtime_state: int = None) -> None:
     _runtime_state_set(runtime_state)
 
 
-def _save_state_deserialize() -> dict[str, Union[bool, int]]:
+def _save_state_deserialize() -> None:
     import datetime
     import json
 
@@ -68,35 +53,47 @@ def _save_state_deserialize() -> dict[str, Union[bool, int]]:
     if SAVE_STATE_FILEPATH.exists():
         with open(SAVE_STATE_FILEPATH, "r", encoding="utf-8") as file:
             data.update(json.load(file))
-
             last_check = datetime.date.fromtimestamp(data["last_check"])
             delta = datetime.date.today() - last_check
             state.days_passed = delta.days
+            state.update_available = data["update_available"]
 
-    return data
+
+def _parse_tag(tag: str) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
+    import re
+
+    vers = tuple(
+        tuple(int(x) for x in re.findall(r"\d+", y))
+        for y in tag.split("-")
+    )
+
+    if len(vers) == 1:
+        return vers[0], (0, 0, 0)
+
+    return vers
+
+
+def _is_autocheck() -> bool:
+    prefs = bpy.context.preferences.addons[var.ADDON_ID].preferences
+
+    if not prefs.mod_update_autocheck:
+        return False
+
+    return state.update_available or ((state.days_passed or 0) >= int(prefs.mod_update_interval))
 
 
 def _update_check(use_force_check: bool) -> None:
-    import re
-    import urllib.request
-    import urllib.error
+    _save_state_deserialize()
+
+    if not use_force_check and not _is_autocheck():
+        state.update_available = False
+        return
+
     import json
+    import re
     import ssl
-
-    prefs = bpy.context.preferences.addons[var.ADDON_ID].preferences
-    save_state = _save_state_deserialize()
-
-    if not use_force_check and not prefs.mod_update_autocheck:
-        return
-
-    if save_state["update_available"]:
-        use_force_check = True
-
-    if not use_force_check and (
-        state.days_passed is not None and
-        state.days_passed < int(prefs.mod_update_interval)
-    ):
-        return
+    import urllib.error
+    import urllib.request
 
     _runtime_state_set(state.CHECKING)
     ssl_context = ssl.SSLContext()
@@ -104,56 +101,52 @@ def _update_check(use_force_check: bool) -> None:
     try:
 
         with urllib.request.urlopen(RELEASES_URL, context=ssl_context) as response:
-            data = json.load(response)
+            prefs = bpy.context.preferences.addons[var.ADDON_ID].preferences
 
-            for release in data:
-
+            for release in json.load(response):
                 if (not prefs.mod_update_prerelease and release["prerelease"]) or release["draft"]:
                     continue
 
                 update_ver, blender_ver = _parse_tag(release["tag_name"])
 
-                if update_ver > ADDON_VERSION:
-                    if blender_ver <= bpy.app.version:
-                        break
-                    else:
-                        continue
-                else:
-                    _save_state_serialize()
-                    return
+                if update_ver > ADDON_VERSION and blender_ver <= bpy.app.version:
+                    break
+            else:
+                state.update_available = False
+                _save_state_serialize()
+                return
 
-            with urllib.request.urlopen(release["assets_url"], context=ssl_context) as response:
-                data = json.load(response)
+        with urllib.request.urlopen(release["assets_url"], context=ssl_context) as response:
+            for asset in json.load(response):
+                if re.match(r".+\d+.\d+.\d+.+", asset["name"]):
+                    break
+            else:
+                state.error_msg = "Unable to find installation file"
+                _save_state_serialize(state.ERROR)
+                return
 
-                for asset in data:
-                    if re.match(r".+\d+.\d+.\d+.+", asset["name"]):
-                        break
-                else:
-                    state.error_msg = "Unable to find installation file"
-                    _save_state_serialize(state.ERROR)
-
-                state.update_available = True
-                state.update_version = ".".join(str(x) for x in update_ver)
-                state.download_url = asset["browser_download_url"]
-                state.changelog_url = release["html_url"]
-                if release["prerelease"]:
-                    state.update_version += " (pre-release)"
+            state.update_available = True
+            state.update_version = ".".join(str(x) for x in update_ver)
+            state.download_url = asset["browser_download_url"]
+            state.changelog_url = release["html_url"]
+            if release["prerelease"]:
+                state.update_version += " (pre-release)"
 
         _save_state_serialize()
 
     except (urllib.error.HTTPError, urllib.error.URLError) as e:
 
         state.error_msg = str(e)
-        _save_state_serialize()
+        _save_state_serialize(state.ERROR)
 
 
 def _update_download() -> None:
     import io
-    import zipfile
-    import urllib.request
-    import urllib.error
     import shutil
     import ssl
+    import urllib.error
+    import urllib.request
+    import zipfile
     from pathlib import Path
 
     _runtime_state_set(state.INSTALLING)
