@@ -157,12 +157,13 @@ def _update_download() -> None:
         with urllib.request.urlopen(state.download_url, context=ssl_context) as response:
             with zipfile.ZipFile(io.BytesIO(response.read())) as zfile:
                 addons_dir = var.ADDON_DIR.parent
-                extract_relpath = Path(zfile.namelist()[0])
-                extract_dir = addons_dir / extract_relpath.parts[0]
+                extract_dir = addons_dir / f"{var.ADDON_DIR.name} update {state.update_version.replace('.', '')}"
+                update_dir = extract_dir / Path(zfile.namelist()[0]).parts[0]
 
                 shutil.rmtree(var.ADDON_DIR)
-                zfile.extractall(addons_dir)
-                extract_dir.rename(var.ADDON_DIR)
+                zfile.extractall(extract_dir)
+                update_dir.rename(var.ADDON_DIR)
+                extract_dir.rmdir()
 
         _runtime_state_set(state.COMPLETED)
 
