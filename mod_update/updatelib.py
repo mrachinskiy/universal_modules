@@ -79,7 +79,10 @@ def _is_autocheck() -> bool:
     if not prefs.mod_update_autocheck:
         return False
 
-    return state.update_available or ((state.days_passed or 0) >= int(prefs.mod_update_interval))
+    if state.days_passed is None:
+        return True
+
+    return state.update_available or (state.days_passed >= int(prefs.mod_update_interval))
 
 
 def _update_check(use_force_check: bool) -> None:
