@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright 2019-2022 Mikhail Rachinskiy
 
-# v1.2.0
+# v1.2.1
 
 from . import operators, state
 from .preferences import Preferences
