@@ -1,5 +1,5 @@
+# SPDX-FileCopyrightText: 2019-2024 Mikhail Rachinskiy
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright 2019-2022 Mikhail Rachinskiy
 
 # v1.2.1
 

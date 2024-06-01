@@ -1,9 +1,9 @@
+# SPDX-FileCopyrightText: 2019-2024 Mikhail Rachinskiy
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright 2019-2022 Mikhail Rachinskiy
 
 from bpy.app.translations import pgettext_iface as _
 
-from . import state, operators
+from . import operators, state
 
 
 class Sidebar:

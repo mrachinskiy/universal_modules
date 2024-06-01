@@ -1,8 +1,8 @@
+# SPDX-FileCopyrightText: 2019-2024 Mikhail Rachinskiy
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright 2019-2022 Mikhail Rachinskiy
 
-from pathlib import Path
 from collections.abc import Iterator
+from pathlib import Path
 
 
 def _po_parse(text: str) -> dict[tuple[str, str], str]:
