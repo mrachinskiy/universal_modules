@@ -1,28 +1,18 @@
 # SPDX-FileCopyrightText: 2021-2024 Mikhail Rachinskiy
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-bl_info = {
-    "name": "Universal Modules Example",
-    "author": "Mikhail Rachinskiy",
-    "version": (1, 0, 0),
-    "blender": (2, 93, 0),
-    "location": "Add-on enable warning/Add-on Prefereces/3D View > Sidebar",
-    "description": "Universal modules usage example.",
-    "doc_url": "https://github.com/mrachinskiy/universal_modules#readme",
-    "tracker_url": "https://github.com/mrachinskiy/universal_modules/issues",
-    "category": "Object",
-}
-
 
 if "bpy" in locals():
     _essential.reload_recursive(var.ADDON_DIR, locals())
 else:
+    from . import _essential, var
+
+    _essential.check(var.CONFIG_DIR, var.MANIFEST["blender_version_min"])
+
     import bpy
     from bpy.types import AddonPreferences, Panel
 
-    from . import mod_update, _essential, var
-
-    _essential.check(var.CONFIG_DIR, bl_info["blender"])
+    from . import mod_update
 
 
 class Preferences(mod_update.Preferences, AddonPreferences):
@@ -55,10 +45,7 @@ def register():
     # mod_update
     # ---------------------------
 
-    mod_update.init(
-        addon_version=bl_info["version"],
-        repo_url="mrachinskiy/universal_modules",
-    )
+    mod_update.init(repo_url="mrachinskiy/universal_modules")
 
     mod_update.localization_extend(TRANSLATION_DICTIONARY)
 

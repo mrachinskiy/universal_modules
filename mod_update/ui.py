@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2024 Mikhail Rachinskiy
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import bpy
 from bpy.app.translations import pgettext_iface as _
 
 from . import operators, state
@@ -48,8 +49,19 @@ def sidebar_ui(layout):
     col.operator(operators.WM_OT_update_download.bl_idname)
 
 
-def prefs_ui(self, layout):
+def prefs_ui(self, layout: bpy.types.UILayout):
+    use_online_access = bpy.context.preferences.system.use_online_access
+
     col = layout.column()
+
+    if not use_online_access:
+        row = col.row()
+        row.alert = True
+        row.alignment = "CENTER"
+        row.label(text="Allow online access for auto update check")
+
+    col = col.column()
+    col.active = use_online_access
     col.prop(self, "mod_update_autocheck")
     col.prop(self, "mod_update_prerelease")
     sub = col.column()

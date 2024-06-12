@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import threading
+from pathlib import Path
 
 import bpy
 
@@ -59,7 +60,7 @@ def _save_state_deserialize() -> None:
             state.update_available = data["update_available"]
 
 
-def _parse_tag(tag: str) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
+def _parse_tag(tag: str) -> tuple[tuple[int, int, int], tuple[int, int, int] | None]:
     import re
 
     vers = tuple(
@@ -68,7 +69,7 @@ def _parse_tag(tag: str) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
     )
 
     if len(vers) == 1:
-        return vers[0], (0, 0, 0)
+        return vers[0], None
 
     return vers
 
@@ -76,13 +77,26 @@ def _parse_tag(tag: str) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
 def _is_autocheck() -> bool:
     prefs = bpy.context.preferences.addons[var.ADDON_ID].preferences
 
-    if not prefs.mod_update_autocheck:
+    if not bpy.context.preferences.system.use_online_access or not prefs.mod_update_autocheck:
         return False
 
     if state.days_passed is None:
         return True
 
     return state.update_available or (state.days_passed >= int(prefs.mod_update_interval))
+
+
+def _check_subfolder(paths: list[str]) -> bool:
+    for path in paths:
+        if path.endswith("blender_manifest.toml"):
+            manifest_parts = len(Path(path).parts)
+
+            if manifest_parts > 2:
+                raise FileNotFoundError("Invalid folder structure")
+
+            return manifest_parts == 1
+
+    raise FileNotFoundError("Package is missing manifest")
 
 
 def _update_check(use_force_check: bool) -> None:
@@ -111,6 +125,9 @@ def _update_check(use_force_check: bool) -> None:
                     continue
 
                 update_ver, blender_ver = _parse_tag(release["tag_name"])
+
+                if blender_ver is None:
+                    continue
 
                 if update_ver > ADDON_VERSION and blender_ver <= bpy.app.version:
                     break
@@ -159,18 +176,23 @@ def _update_download() -> None:
 
         with urllib.request.urlopen(state.download_url, context=ssl_context) as response:
             with zipfile.ZipFile(io.BytesIO(response.read())) as zfile:
+                no_subfolder = _check_subfolder(zfile.namelist())
                 addons_dir = var.ADDON_DIR.parent
                 extract_dir = addons_dir / f"{var.ADDON_DIR.name} update {state.update_version.replace('.', '')}"
-                update_dir = extract_dir / Path(zfile.namelist()[0]).parts[0]
 
-                shutil.rmtree(var.ADDON_DIR)
                 zfile.extractall(extract_dir)
-                update_dir.rename(var.ADDON_DIR)
-                extract_dir.rmdir()
+                shutil.rmtree(var.ADDON_DIR)
+
+                if no_subfolder:
+                    extract_dir.rename(var.ADDON_DIR)
+                else:
+                    update_dir = extract_dir / Path(zfile.namelist()[0]).parts[0]
+                    update_dir.rename(var.ADDON_DIR)
+                    extract_dir.rmdir()
 
         _runtime_state_set(state.COMPLETED)
 
-    except (urllib.error.HTTPError, urllib.error.URLError) as e:
+    except (urllib.error.HTTPError, urllib.error.URLError, FileNotFoundError) as e:
 
         state.error_msg = str(e)
         _runtime_state_set(state.ERROR)
@@ -184,11 +206,11 @@ def update_init_download() -> None:
     threading.Thread(target=_update_download).start()
 
 
-def init(addon_version: tuple[int, int, int], repo_url: str) -> None:
+def init(repo_url: str) -> None:
     global ADDON_VERSION
     global RELEASES_URL
 
-    ADDON_VERSION = addon_version
+    ADDON_VERSION = tuple([int(x) for x in var.MANIFEST["version"].split(".")])
     RELEASES_URL = f"https://api.github.com/repos/{repo_url}/releases?per_page=10"
 
     update_init_check()

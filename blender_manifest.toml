@@ -1,0 +1,12 @@
+schema_version = "1.0.0"
+id = "universal_modules"
+version = "1.0.0"
+name = "Universal Modules Example"
+tagline = "Universal modules usage example"
+maintainer = "Mikhail Rachinskiy"
+type = "add-on"
+tags = ["Development"]
+blender_version_min = "4.2.0"
+website = "https://github.com/mrachinskiy/universal_modules"
+license = ["SPDX:GPL-3.0-or-later"]
+copyright = ["2021-2024 Mikhail Rachinskiy"]

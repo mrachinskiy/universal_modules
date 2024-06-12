@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2024 Mikhail Rachinskiy
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# v1.2.1
+# v1.3.0
 
 from . import operators, state
 from .preferences import Preferences
