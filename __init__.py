@@ -3,11 +3,11 @@
 
 
 if "bpy" in locals():
-    _essential.reload_recursive(var.ADDON_DIR, locals())
+    essentials.reload_recursive(var.ADDON_DIR, locals())
 else:
-    from . import _essential, var
+    from . import essentials, var
 
-    _essential.check(var.CONFIG_DIR, var.MANIFEST["blender_version_min"])
+    essentials.check(var.CONFIG_DIR, var.MANIFEST["blender_version_min"])
 
     import bpy
     from bpy.types import AddonPreferences, Panel
