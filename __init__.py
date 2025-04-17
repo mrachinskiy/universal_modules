@@ -7,7 +7,7 @@ if "bpy" in locals():
 else:
     from . import essentials, var
 
-    essentials.check(var.CONFIG_DIR, var.MANIFEST["blender_version_min"])
+    essentials.check_integrity(var.CONFIG_DIR)
 
     import bpy
     from bpy.types import AddonPreferences, Panel
@@ -29,10 +29,11 @@ class VIEW3D_PT_universal_modules_update(mod_update.Sidebar, Panel):
     bl_region_type = "UI"
 
 
-classes = (
-    Preferences,
-    VIEW3D_PT_universal_modules_update,
-    *mod_update.ops,
+classes = essentials.get_classes(
+    (
+        (Preferences, VIEW3D_PT_universal_modules_update),
+        mod_update.operators,
+    )
 )
 
 TRANSLATION_DICTIONARY = {}
